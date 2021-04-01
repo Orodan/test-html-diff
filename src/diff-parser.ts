@@ -463,5 +463,7 @@ export function parse(diffInput: string, config: DiffParserConfig = {}): DiffFil
   saveBlock();
   saveFile();
 
+  console.log('files: ', files);
+
   return files;
 }

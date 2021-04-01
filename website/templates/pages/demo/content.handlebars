@@ -21,117 +21,23 @@
 
 <section class="section">
   <div class="container">
-    <h2 class="title is-size-3 is-spaced">Options</h2>
-
-    <div class="columns">
-      <div class="column">
-        <input id="url" class="diff-url-input is-size-5" type="text" name="url" placeholder="URL" />
-      </div>
-      <div class="column is-narrow">
-        <a id="url-btn" class="diff-url-btn button is-green is-small" href="#">Load</a>
-      </div>
-    </div>
-
-    <div class="columns is-desktop is-multiline">
-      <div class="column is-one-fifth-widescreen">
-        <label title="Output format of the HTML, either line by line or side by side">
-          <p>Output Format</p>
-          <select class="options-label-value" id="diff-url-options-output-format" name="outputFormat">
-            <option value="line-by-line" selected>Line by Line</option>
-            <option value="side-by-side">Side by Side</option>
-          </select>
-        </label>
-      </div>
-      <div class="column is-one-fifth-widescreen">
-        <label title="Show the file list summary before the diff">
-          <p>File Summary</p>
-          <input class="options-label-value" id="diff-url-options-show-files" type="checkbox" name="drawFileList"
-            checked />
-        </label>
-      </div>
-      <div class="column is-one-fifth-widescreen">
-        <label title="Level of matching for the comparison algorithm">
-          <p>Matching Type</p>
-          <select class="options-label-value" id="diff-url-options-matching" name="matching">
-            <option value="lines">Lines</option>
-            <option value="words" selected>Words</option>
-            <option value="none">None</option>
-          </select>
-        </label>
-      </div>
-      <div class="column is-one-fifth-widescreen">
-        <label title="Similarity threshold for the matching algorithm">
-          <p>Words Threshold</p>
-          <input class="options-label-value" id="diff-url-options-match-words-threshold" type="number"
-            name="matchWordsThreshold" value="0.25" step="0.05" min="0" max="1" />
-        </label>
-      </div>
-      <div class="column is-one-fifth-widescreen">
-        <label title="Maximum number of comparison performed by the matching algorithm in a block of changes">
-          <p>Max Comparisons</p>
-          <input class="options-label-value" id="diff-url-options-matching-max-comparisons" type="number"
-            name="matchingMaxComparisons" value="2500" step="100" min="0" />
-        </label>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container">
+    <h1 style="margin-top: 20px">diff2html</h1>
     <div id="url-diff-container" style="margin: 0 auto;"></div>
-  </div>
-</section>
 
-<section class="section">
-  <div class="container block">
-    <h3 id="help" class="title is-size-3 is-spaced">Help</h3>
-    <ul>
-      <li class="block">
-        <p class="has-text-weight-bold">Why should I use this instead of GitHub, Bitbucket or GitLab?</p>
-        <p>There are multiple advantages to using diff2html, but they can be devided in two categories: portability and
-          features.
-        </p>
-        <p>
-          Regarding portability, diff2html makes it easy for people to share static html representations of diffs with
-          anyone.
-        </p>
-        <p>
-          Regarding features you can have code syntax highlight, line similarity matching (similar lines are together),
-          line by Line and side by side diffs and easy code selection.
-        </p>
-        <p>All of this is completly independent of the provider you use to version the code.</p>
-      </li>
-      <li class="block">
-        <p class="has-text-weight-bold">What urls are supported in this demo?</p>
-        <p>Any GitHub, Bitbucket or GitLab commit, pull/merge request urls.</p>
-        <p>Any Git or Unified Raw Diff or Patch urls.</p>
-      </li>
-      <li class="block">
-        <p class="has-text-weight-bold">Can I share this demo with a friend, colleague or co-worker?</p>
-        <p>Just copy the url from the page, which should contain all the customizations and reference for the diff you
-          introduced.</p>
-        <p>ex: <a
-            href="demo.html?matching=none&matchWordsThreshold=0.25&maxLineLengthHighlight=10000&diffStyle=word&renderNothingWhenEmpty=0&matchingMaxComparisons=2500&maxLineSizeInBlockForComparison=200&outputFormat=line-by-line&drawFileList=1&synchronisedScroll=1&highlight=1&fileListToggle=1&fileListStartVisible=0&diff=https://github.com/rtfpessoa/diff2html/pull/106">https://diff2html.xyz/demo.html?matching=none&matchWordsThreshold=0.25&maxLineLengthHighlight=10000&diffStyle=word&renderNothingWhenEmpty=0&matchingMaxComparisons=2500&maxLineSizeInBlockForComparison=200&outputFormat=line-by-line&drawFileList=1&synchronisedScroll=1&highlight=1&fileListToggle=1&fileListStartVisible=0&diff=https://github.com/rtfpessoa/diff2html/pull/106</a>
-        </p>
-      </li>
-      <li class="block">
-        <p class="has-text-weight-bold">How can I paste the diff output directly in a page?</p>
-        <p><a href="https://diffy.org/">diffy.org</a> is an amazing tool created by <a
-            href="https://github.com/pbu88">pbu88</a>
-          to share your diffs and uses diff2html under the hood.</p>
-        <p>Also, <a href="https://www.npmjs.com/package/diff2html-cli">diff2html-cli</a> can directly publish diffs to
-          <a href="https://diffy.org/">diffy.org</a></p>
-      </li>
-    </ul>
-  </div>
-</section>
+    <h1 style="margin-top: 20px">Html differ</h1>
+    <div id="html-differ-container" style="margin: 0 auto;"></div>
 
-<section class="section">
-  <div class="container">
-    <h3 class="title is-size-3 is-spaced">Thank you</h3>
-    <p>I want to thank <a href="https://github.com/kevinsimper">kevinsimper</a> for this great idea,
-      providing better diff support for existing online services.
-    </p>
+    <h1 style="margin-top: 20px">Html diff</h1>
+    <div id="html-diff-container" style="margin: 0 auto;"></div>
+
+    <h1 style="margin-top: 20px">Html diff</h1>
+    <div id="html-diff-container"></div>
+
+    <h1 style="margin-top: 20px">Html diff side by side</h1>
+    <div style="display: flex">
+      <div id="html-diff-container-old" style="margin: 0 auto; flex: 1;"></div>
+
+      <div id="html-diff-container-new" style="margin: 0 auto; flex: 1;"></div>
+    </div>
   </div>
 </section>

@@ -1,4 +1,9 @@
-import { Diff2HtmlUI, defaultDiff2HtmlUIConfig, Diff2HtmlUIConfig } from '../../../../src/ui/js/diff2html-ui-slim';
+import * as Diff from 'diff';
+import * as HtmlDiff from 'htmldiff';
+import * as HtmlDifferModule from 'html-differ';
+import * as HtmlDifferLogger from 'html-differ/lib/logger';
+
+import { Diff2HtmlUI } from '../../../../src/ui/js/diff2html-ui-slim';
 
 import '../../../main.ts';
 import '../../../main.css';
@@ -19,207 +24,6 @@ import './demo.css';
  * https://bitbucket.org/atlassian/amps/pull-requests/236
  */
 
-type URLParams = {
-  diff?: string;
-  diffTooBigMessage?: string;
-  [key: string]: string | boolean | number | undefined;
-};
-
-const searchParam = 'diff';
-
-function getParamsFromSearch(search: string): URLParams {
-  try {
-    return search
-      .split('?')[1]
-      .split('&')
-      .reduce((urlParams, e) => {
-        const values = e.split('=');
-        return {
-          ...urlParams,
-          [values[0]]: values[1],
-        };
-      }, {});
-  } catch (_ignore) {
-    return {};
-  }
-}
-
-function validateUrl(url: string): boolean {
-  return /^(?:(?:https?|ftp):)?\/\/(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4])|(?:[\da-z\u00a1-\uffff]-*)*[\da-z\u00a1-\uffff]+(?:\.(?:[\da-z\u00a1-\uffff]-*)*[\da-z\u00a1-\uffff]+)*\.[a-z\u00a1-\uffff]{2,}.?)(?::\d{2,5})?(?:[#/?]\S*)?$/i.test(
-    url,
-  );
-}
-
-type Request = {
-  url: string;
-  headers: Headers;
-};
-
-function prepareRequest(url: string): Request {
-  if (!validateUrl(url)) {
-    const errorMsg = 'Invalid url provided!';
-    console.error(errorMsg);
-    throw new Error(errorMsg);
-  }
-
-  let fetchUrl;
-  const headers = new Headers();
-
-  const githubCommitUrl = /^https?:\/\/(?:www\.)?github\.com\/(.*?)\/(.*?)\/commit\/(.*?)(?:\.diff)?(?:\.patch)?(?:\/.*)?$/;
-  const githubPrUrl = /^https?:\/\/(?:www\.)?github\.com\/(.*?)\/(.*?)\/pull\/(.*?)(?:\.diff)?(?:\.patch)?(?:\/.*)?$/;
-
-  const gitlabCommitUrl = /^https?:\/\/(?:www\.)?gitlab\.com\/(.*?)\/(.*?)\/commit\/(.*?)(?:\.diff)?(?:\.patch)?(?:\/.*)?$/;
-  const gitlabPrUrl = /^https?:\/\/(?:www\.)?gitlab\.com\/(.*?)\/(.*?)\/merge_requests\/(.*?)(?:\.diff)?(?:\.patch)?(?:\/.*)?$/;
-
-  const bitbucketCommitUrl = /^https?:\/\/(?:www\.)?bitbucket\.org\/(.*?)\/(.*?)\/commits\/(.*?)(?:\/raw)?(?:\/.*)?$/;
-  const bitbucketPrUrl = /^https?:\/\/(?:www\.)?bitbucket\.org\/(.*?)\/(.*?)\/pull-requests\/(.*?)(?:\/.*)?$/;
-
-  function gitLabUrlGen(userName: string, projectName: string, type: string, value: string): string {
-    return (
-      'https://crossorigin.me/https://gitlab.com/' + userName + '/' + projectName + '/' + type + '/' + value + '.diff'
-    );
-  }
-
-  function gitHubUrlGen(userName: string, projectName: string, type: string, value: string): string {
-    headers.append('Accept', 'application/vnd.github.v3.diff');
-    return 'https://api.github.com/repos/' + userName + '/' + projectName + '/' + type + '/' + value;
-  }
-
-  function bitbucketUrlGen(userName: string, projectName: string, type: string, value: string): string {
-    const baseUrl = 'https://bitbucket.org/api/2.0/repositories/';
-    if (type === 'pullrequests') {
-      return baseUrl + userName + '/' + projectName + '/pullrequests/' + value + '/diff';
-    }
-    return baseUrl + userName + '/' + projectName + '/diff/' + value;
-  }
-
-  let values;
-  if ((values = githubCommitUrl.exec(url))) {
-    fetchUrl = gitHubUrlGen(values[1], values[2], 'commits', values[3]);
-  } else if ((values = githubPrUrl.exec(url))) {
-    fetchUrl = gitHubUrlGen(values[1], values[2], 'pulls', values[3]);
-  } else if ((values = gitlabCommitUrl.exec(url))) {
-    fetchUrl = gitLabUrlGen(values[1], values[2], 'commit', values[3]);
-  } else if ((values = gitlabPrUrl.exec(url))) {
-    fetchUrl = gitLabUrlGen(values[1], values[2], 'merge_requests', values[3]);
-  } else if ((values = bitbucketCommitUrl.exec(url))) {
-    fetchUrl = bitbucketUrlGen(values[1], values[2], 'commit', values[3]);
-  } else if ((values = bitbucketPrUrl.exec(url))) {
-    fetchUrl = bitbucketUrlGen(values[1], values[2], 'pullrequests', values[3]);
-  } else {
-    fetchUrl = url;
-  }
-
-  return {
-    url: fetchUrl,
-    headers: headers,
-  };
-}
-
-function getConfiguration(urlParams: URLParams): Diff2HtmlUIConfig {
-  // Removing `diff` and `diffTooBigMessage` form `urlParams` to avoid being inserted
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { diff, diffTooBigMessage, ...urlParamsRest } = urlParams;
-  const config: URLParams = {
-    ...defaultDiff2HtmlUIConfig,
-    ...urlParamsRest,
-  };
-
-  return Object.entries(config).reduce((object, [k, v]) => {
-    const newObject = !Number.isNaN(Number(v))
-      ? { [k]: Number(v) }
-      : v === 'true' || v === 'false'
-      ? { [k]: Boolean(v) }
-      : { [k]: v };
-    return { ...object, ...newObject };
-  }, {});
-}
-
-async function getDiff(request: Request): Promise<string> {
-  try {
-    const result = await fetch(request.url, {
-      method: 'GET',
-      headers: request.headers,
-      mode: 'cors',
-      cache: 'default',
-    });
-    return result.text();
-  } catch (error) {
-    console.error('Failed to retrieve diff', error);
-    throw error;
-  }
-}
-
-function draw(diffString: string, config: Diff2HtmlUIConfig, elements: Elements): void {
-  const diff2htmlUi = new Diff2HtmlUI(elements.structure.diffTarget, diffString, config);
-  diff2htmlUi.draw();
-}
-
-async function prepareInitialState(elements: Elements): Promise<[Diff2HtmlUIConfig, string]> {
-  const urlParams = getParamsFromSearch(window.location.search);
-  const currentUrl = (urlParams && urlParams[searchParam]) || 'https://github.com/rtfpessoa/diff2html/pull/106';
-
-  if (currentUrl !== elements.url.input.value) elements.url.input.value = currentUrl;
-
-  const request = prepareRequest(currentUrl);
-
-  const initialConfiguration = getConfiguration(urlParams);
-  const initialDiff = await getDiff(request);
-
-  return [initialConfiguration, initialDiff];
-}
-
-function updateBrowserUrl(config: Diff2HtmlUIConfig, newDiffUrl: string): void {
-  const paramString = Object.entries(config)
-    .map(([k, v]) => k + '=' + v)
-    .join('&');
-  const newPageUrl =
-    window.location.protocol +
-    '//' +
-    window.location.host +
-    window.location.pathname +
-    '?' +
-    paramString +
-    '&' +
-    searchParam +
-    '=' +
-    newDiffUrl;
-  window.history.pushState({ path: newPageUrl }, '', newPageUrl);
-}
-
-type Elements = {
-  structure: {
-    diffTarget: HTMLElement;
-  };
-  url: {
-    input: HTMLInputElement;
-    button: HTMLElement;
-  };
-  options: {
-    outputFormat: HTMLInputElement;
-    matching: HTMLInputElement;
-    wordsThreshold: HTMLInputElement;
-    matchingMaxComparisons: HTMLInputElement;
-  };
-  checkboxes: {
-    drawFileList: HTMLInputElement;
-  };
-};
-
-function isHTMLInputElement(arg?: unknown): arg is HTMLInputElement {
-  return arg !== null && (arg as HTMLInputElement)?.value !== undefined;
-}
-
-function getHTMLInputElementById(id: string): HTMLInputElement {
-  const element = document.getElementById(id);
-
-  if (!isHTMLInputElement(element)) {
-    throw new Error(`Could not find html input element with id '${id}'`);
-  }
-
-  return element;
-}
-
 function getHTMLElementById(id: string): HTMLElement {
   const element = document.getElementById(id);
 
@@ -230,72 +34,103 @@ function getHTMLElementById(id: string): HTMLElement {
   return element;
 }
 
+function removeInsElements(line: string): string {
+  return line.replace(/(<ins[^>]*>((.|\n)*?)<\/ins>)/g, '');
+}
+
+function removeDelElements(line: string): string {
+  return line.replace(/(<del[^>]*>((.|\n)*?)<\/del>)/g, '');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Improves browser compatibility
   require('whatwg-fetch');
 
-  const drawAndUpdateUrl = async (
-    diffUrl: string,
-    diffString: string,
-    config: Diff2HtmlUIConfig,
-    elements: Elements,
-  ): Promise<void> => {
-    updateBrowserUrl(config, diffUrl);
-    const newRequest = prepareRequest(diffUrl);
-    diffString = await getDiff(newRequest);
-    draw(diffString, config, elements);
+  const configuration: any = {
+    outputFormat: 'side-by-side',
+    matching: 'lines',
+    highlight: false,
   };
 
-  const elements: Elements = {
-    structure: {
-      diffTarget: getHTMLElementById('url-diff-container'),
-    },
-    url: {
-      input: getHTMLInputElementById('url'),
-      button: getHTMLElementById('url-btn'),
-    },
-    options: {
-      outputFormat: getHTMLInputElementById('diff-url-options-output-format'),
-      matching: getHTMLInputElementById('diff-url-options-matching'),
-      wordsThreshold: getHTMLInputElementById('diff-url-options-match-words-threshold'),
-      matchingMaxComparisons: getHTMLInputElementById('diff-url-options-matching-max-comparisons'),
-    },
-    checkboxes: {
-      drawFileList: getHTMLInputElementById('diff-url-options-show-files'),
-    },
+  console.log('HtmlDifferModule: ', HtmlDifferModule);
+  const HtmlDiffer = HtmlDifferModule.HtmlDiffer;
+  console.log('HtmlDiffer: ', HtmlDiffer);
+
+  const options = {
+    ignoreAttributes: [],
+    compareAttributesAsJSON: [],
+    ignoreWhitespaces: true,
+    ignoreComments: true,
+    ignoreEndTags: false,
+    ignoreDuplicateAttributes: false,
   };
 
-  let [config, diffString] = await prepareInitialState(elements);
+  const htmlDiffer = new HtmlDiffer(options);
 
-  // Update HTML inputs from any changes in URL
-  config.outputFormat && (elements.options.outputFormat.value = config.outputFormat);
-  config.drawFileList && (elements.checkboxes.drawFileList.checked = config.drawFileList);
-  config.matching && (elements.options.matching.value = config.matching);
-  config.matchWordsThreshold && (elements.options.wordsThreshold.value = config.matchWordsThreshold.toString());
-  config.matchingMaxComparisons &&
-    (elements.options.matchingMaxComparisons.value = config.matchingMaxComparisons.toString());
+  const sampleA = await fetch('sampleA.html').then(res => res.text());
+  const sampleB = await fetch('sampleB.html').then(res => res.text());
 
-  Object.entries(elements.options).forEach(([option, element]) =>
-    element.addEventListener('change', () => {
-      config = { ...config, [option]: element.value };
-      drawAndUpdateUrl(elements.url.input.value, diffString, config, elements);
-    }),
-  );
+  const diff = htmlDiffer.diffHtml(sampleA, sampleB),
+    isEqual = htmlDiffer.isEqual(sampleA, sampleB),
+    res = HtmlDifferLogger.getDiffText(diff, { charsAroundDiff: 40 });
 
-  Object.entries(elements.checkboxes).forEach(([option, checkbox]) =>
-    checkbox.addEventListener('change', () => {
-      config = { ...config, [option]: checkbox.checked };
-      drawAndUpdateUrl(elements.url.input.value, diffString, config, elements);
-    }),
-  );
+  console.log('diff: ', diff);
+  console.log('isEqual:', isEqual);
+  console.log('res: ', res);
 
-  elements.url.button.addEventListener('click', async e => {
-    e.preventDefault();
-    const newDiffUrl = elements.url.input.value;
-    const newRequest = prepareRequest(newDiffUrl);
-    diffString = await getDiff(newRequest);
-    drawAndUpdateUrl(newDiffUrl, diffString, config, elements);
-  });
+  // HtmlDiffer
 
-  return drawAndUpdateUrl(elements.url.input.value, diffString, config, elements);
+  const htmlDifferContainer = document.querySelector('#html-differ-container');
+  if (htmlDifferContainer) htmlDifferContainer.innerHTML = res;
+
+  // HtmlDiff
+
+  const htmlDiffResult = HtmlDiff.default(sampleA, sampleB);
+  const htmlDiffOldResult = removeInsElements(htmlDiffResult);
+  const htmlDiffNewResult = removeDelElements(htmlDiffResult);
+
+  const htmlDiffContainer = document.querySelector('#html-diff-container');
+  if (htmlDiffContainer) htmlDiffContainer.innerHTML = htmlDiffResult;
+
+  const htmlDiffOldContainer = document.querySelector('#html-diff-container-old');
+  if (htmlDiffOldContainer) htmlDiffOldContainer.innerHTML = htmlDiffOldResult;
+
+  const htmlDiffNewContainer = document.querySelector('#html-diff-container-new');
+  if (htmlDiffNewContainer) htmlDiffNewContainer.innerHTML = htmlDiffNewResult;
+
+  // Diff2Html
+
+  const diffPatch = Diff.createTwoFilesPatch('sampleA', 'sampleB', sampleA, sampleB);
+  const diffTarget = getHTMLElementById('url-diff-container');
+
+  const diff2htmlUi = new Diff2HtmlUI(diffTarget, diffPatch, configuration);
+
+  diff2htmlUi.diffHtml = diff2htmlUi.diffHtml
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+
+    .replace(/<<del>/g, '<del><')
+    .replace(/<\/del>>/g, '></del>')
+    .replace(/<\/<del>/g, '<del></')
+
+    .replace(/<<ins>/g, '<ins><')
+    .replace(/<\/ins>>/g, '></ins>')
+    .replace(/<\/<ins>/g, '<ins></')
+    // a
+    .replace(/(?<!<|<\/)a>/g, '') // Replace 'a>' by '' (and not <a> or </a>)
+    // p
+    .replace(/(?<!<|<\/)p>/g, '') // Replace 'p>' by '' (and not <p> or </p>)
+    .replace(/(?<!<|<\/)p&gt;/g, '') // Replace 'p&gt;' by '' (and not <p> or </p>)
+    // img
+    .replace(/(?<!<|<\/)img>/g, '') // Replace 'img>' by '' (and not <image> or </image>)
+    .replace(/(?<!<|<\/)img&gt;/g, '') // Replace 'img&gt;' by '' (and not <image> or </image>)
+    // img src
+    .replace(/(?<=src=".*)<del>(?=.*")/g, '') // Replace src="...<del> ..." by "..."
+    .replace(/(?<=src=".*)<\/del>(?=.*")/g, '') // Replace src="...</del> ..." by "..."
+    .replace(/(?<=src=".*)<ins>(?=.*")/g, '') // Replace src="...<ins> ..." by "..."
+    .replace(/(?<=src=".*)<\/ins>(?=.*")/g, '') // Replace src="...</ins> ..." by "..."
+    // article
+    .replace(/(?<!<|<\/)article>/g, '') // Replace 'article>' by '' (and not <article> or </article>)
+    .replace(/(?<!<|<\/)article&gt;/g, ''); // Replace 'article&gt;' by '' (and not <article> or </article>)
+  diff2htmlUi.draw();
 });

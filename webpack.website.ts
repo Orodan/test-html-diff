@@ -40,6 +40,8 @@ function plugins(page: string): webpack.Plugin[] {
         { from: 'website/favicon.ico', to: 'favicon.ico' },
         { from: 'website/robots.txt', to: 'robots.txt' },
         { from: 'website/sitemap.xml', to: 'sitemap.xml' },
+        { from: 'website/sampleA.html', to: 'sampleA.html' },
+        { from: 'website/sampleB.html', to: 'sampleB.html' },
       ],
     }),
   ];

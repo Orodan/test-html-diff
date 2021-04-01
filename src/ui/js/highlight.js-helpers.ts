@@ -6,7 +6,8 @@
 /* Utility functions */
 
 function escapeHTML(value: string): string {
-  return value.replace(/&/gm, '&amp;').replace(/</gm, '&lt;').replace(/>/gm, '&gt;');
+  return value;
+  // value.replace(/&/gm, '&amp;').replace(/</gm, '&lt;').replace(/>/gm, '&gt;');
 }
 
 function tag(node: Node): string {

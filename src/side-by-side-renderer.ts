@@ -111,7 +111,7 @@ export default class SideBySideRenderer {
           } else if (contextLines.length) {
             contextLines.forEach(line => {
               const { prefix, content } = renderUtils.deconstructLine(line.content, file.isCombined);
-              const { left, right } = this.generateLineHtml(
+              const testLine = this.generateCombinedLine(
                 {
                   type: renderUtils.CSSLineClass.CONTEXT,
                   prefix: prefix,
@@ -125,8 +125,8 @@ export default class SideBySideRenderer {
                   number: line.newNumber,
                 },
               );
-              fileHtml.left += left;
-              fileHtml.right += right;
+              fileHtml.left += testLine;
+              fileHtml.right += testLine;
             });
           } else if (oldLines.length || newLines.length) {
             const { left, right } = this.processChangedLines(file.isCombined, oldLines, newLines);
@@ -262,9 +262,10 @@ export default class SideBySideRenderer {
             }
           : undefined;
 
-      const { left, right } = this.generateLineHtml(preparedOldLine, preparedNewLine);
-      fileHtml.left += left;
-      fileHtml.right += right;
+      // const { left, right } = this.generateLineHtml(preparedOldLine, preparedNewLine);
+      const testLine = this.generateCombinedLine(preparedOldLine, preparedNewLine);
+      fileHtml.left += testLine;
+      fileHtml.right += testLine;
     }
 
     return fileHtml;
@@ -275,6 +276,13 @@ export default class SideBySideRenderer {
       left: this.generateSingleHtml(oldLine),
       right: this.generateSingleHtml(newLine),
     };
+  }
+
+  generateCombinedLine(oldLine?: DiffPreparedLine, newLine?: DiffPreparedLine): string {
+    return this.hoganUtils.render(genericTemplatesPath, 'combined-line', {
+      old: oldLine,
+      new: newLine,
+    });
   }
 
   generateSingleHtml(line?: DiffPreparedLine): string {

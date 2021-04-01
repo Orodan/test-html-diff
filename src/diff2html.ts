@@ -26,6 +26,7 @@ export function parse(diffInput: string, configuration: Diff2HtmlConfig = {}): D
 }
 
 export function html(diffInput: string | DiffFile[], configuration: Diff2HtmlConfig = {}): string {
+  console.log('configuration: ', configuration);
   const config = { ...defaultDiff2HtmlConfig, ...configuration };
 
   const diffJson = typeof diffInput === 'string' ? DiffParser.parse(diffInput, config) : diffInput;

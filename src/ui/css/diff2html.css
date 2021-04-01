@@ -5,6 +5,18 @@
  *
  */
 
+.combined-line-container {
+  display: flex;
+}
+
+.combined-line-old-content {
+  flex: 1;
+}
+
+.combined-line-new-content {
+  flex: 1;
+}
+
 .d2h-d-none {
   display: none;
 }

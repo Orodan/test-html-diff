@@ -34,7 +34,7 @@ export const defaultDiff2HtmlUIConfig = {
 
 export class Diff2HtmlUI {
   readonly config: typeof defaultDiff2HtmlUIConfig;
-  readonly diffHtml: string;
+  diffHtml: string;
   readonly targetElement: HTMLElement;
   readonly hljs: typeof HighlightJS | null = null;
 
@@ -47,6 +47,7 @@ export class Diff2HtmlUI {
     hljs?: typeof HighlightJS,
   ) {
     this.config = { ...defaultDiff2HtmlUIConfig, ...config };
+    console.log('this.diffInput:', diffInput);
     this.diffHtml = diffInput !== undefined ? html(diffInput, this.config) : target.innerHTML;
     this.targetElement = target;
     if (hljs !== undefined) this.hljs = hljs;
@@ -54,10 +55,10 @@ export class Diff2HtmlUI {
 
   draw(): void {
     this.targetElement.innerHTML = this.diffHtml;
-    if (this.config.synchronisedScroll) this.synchronisedScroll();
-    if (this.config.highlight) this.highlightCode();
-    if (this.config.fileListToggle) this.fileListToggle(this.config.fileListStartVisible);
-    if (this.config.fileContentToggle) this.fileContentToggle();
+    // if (this.config.synchronisedScroll) this.synchronisedScroll();
+    // if (this.config.highlight) this.highlightCode();
+    // if (this.config.fileListToggle) this.fileListToggle(this.config.fileListStartVisible);
+    // if (this.config.fileContentToggle) this.fileContentToggle();
   }
 
   synchronisedScroll(): void {

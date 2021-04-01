@@ -85,8 +85,11 @@
     ]
   },
   "dependencies": {
-    "diff": "4.0.2",
-    "hogan.js": "3.0.2"
+    "diff": "^4.0.2",
+    "git-diff": "^2.0.6",
+    "hogan.js": "3.0.2",
+    "html-differ": "^1.4.0",
+    "htmldiff": "^0.0.4"
   },
   "optionalDependencies": {
     "highlight.js": "10.4.1"

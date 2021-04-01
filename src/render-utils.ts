@@ -88,14 +88,14 @@ function prefixLength(isCombined: boolean): number {
  */
 // TODO: Test this method inside deconstructLine since it should not be used anywhere else
 export function escapeForHtml(str: string): string {
-  return str
-    .slice(0)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+  return str;
+  // .slice(0)
+  // .replace(/&/g, '&amp;')
+  // .replace(/</g, '&lt;')
+  // .replace(/>/g, '&gt;')
+  // .replace(/"/g, '&quot;')
+  // .replace(/'/g, '&#x27;')
+  // .replace(/\//g, '&#x2F;');
 }
 
 /**
@@ -225,6 +225,9 @@ export function diffHighlight(
   const line1 = deconstructLine(diffLine1, isCombined, false);
   const line2 = deconstructLine(diffLine2, isCombined, false);
 
+  console.log('line1: ', line1);
+  console.log('line2: ', line2);
+
   if (line1.content.length > maxLineLengthHighlight || line2.content.length > maxLineLengthHighlight) {
     return {
       oldLine: {
@@ -243,6 +246,8 @@ export function diffHighlight(
       ? jsDiff.diffChars(line1.content, line2.content)
       : jsDiff.diffWordsWithSpace(line1.content, line2.content);
 
+  console.log('diff: ', diff);
+
   const changedWords: jsDiff.Change[] = [];
   if (diffStyle === 'word' && matching === 'words') {
     const removed = diff.filter(element => element.removed);
@@ -259,10 +264,21 @@ export function diffHighlight(
     });
   }
 
+  // let htmlTag = false
+
   const highlightedLine = diff.reduce((highlightedLine, part) => {
     const elemType = part.added ? 'ins' : part.removed ? 'del' : null;
     const addClass = changedWords.indexOf(part) > -1 ? ' class="d2h-change"' : '';
     const escapedValue = escapeForHtml(part.value);
+
+    console.log('part.value: ', part.value);
+    console.log('highlightedLine: ', highlightedLine);
+
+    // if (part.value === '<'
+    //   || (part.value.length && part.value[0] === '<' && part.value[part.value.length -1] !== '>')) htmlTag = true
+    // if (htmlTag && part.value === '>') htmlTag = false
+
+    // if (htmlTag) return `${highlightedLine}${escapedValue}`
 
     return elemType !== null
       ? `${highlightedLine}<${elemType}${addClass}>${escapedValue}</${elemType}>`
